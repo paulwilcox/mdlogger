@@ -1,0 +1,16 @@
+{
+  "name": "mdlogger",
+  "version": "0.0.0",
+  "description": "Process code in your markdown similar to knittr from r",
+  "main": "mdLogger.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "markdown",
+    "logging",
+    "javascript"
+  ],
+  "author": "Paul Wilcox",
+  "license": "ISC"
+}
