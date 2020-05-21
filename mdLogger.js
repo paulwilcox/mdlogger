@@ -15,6 +15,7 @@ let commentFrames = args[2] == '-c';
     let groups = groupFileLines(source);
     groups = await processCodeGroups(groups);
     let output = rebuildGroups(groups);
+    output = applyCommentSwitch(output);
 
     if (target == undefined) {
         console.log({output});
@@ -24,6 +25,44 @@ let commentFrames = args[2] == '-c';
     fs.writeFileSync(target, output);
 
 }())
+
+function applyCommentSwitch (input) {
+
+    let lines = input.split('\r\n');
+    let output = '';
+    
+    for (let line of lines) {
+
+        let ft = frameType(line);
+        let leaveAsIs = 
+            ft == null ||
+            (commentFrames && ft == 'comment') ||
+            (!commentFrames && ft == 'code');
+
+        if (leaveAsIs) { 
+            output += `\r\n${line}`;
+            continue;
+        }
+
+        let fa = parseFrameArgs(line);
+
+        output += commentFrames 
+            ? `\r\n[${fa.language || '--'}]: # (`
+            : `\r\n    ````${fa.language || ''} {`;
+
+        for(let key of Object.keys(fa)) {
+            if (key == 'language')
+                continue;
+            output += `${key}=${fa[key]}`;
+        }
+
+        output += commentFrames ? ')' : `}`;
+
+    }
+
+    return output;
+
+}
 
 function rebuildGroups(groups) {
     let output = '';
@@ -126,8 +165,8 @@ function groupFileLines (file) {
 }
 
 function isFrameStart (line) { 
-    return  line.trim().startsWith('```') || // ```lang {yadah}
-            line.trim().match(/^\[\w+\]: # \(.+\)/); // [lang]: # (yadah)
+    return  line.trim().startsWith('```') || // ```lang {...}
+            line.trim().match(/^\[\w+\]: # \(.+\)/); // [lang]: # (...)
 }
 
 function isFrameEnd (line) { 
@@ -135,25 +174,40 @@ function isFrameEnd (line) {
             line.trim().match(/^\[\w+\]: # \(\)/); // [lang]: # ()
 }
 
+function frameType (line) {
+    return line.trim().startsWith('```') ? 'code'
+        :   line.trim().endsWith('```') ? 'code'
+        :   line.trim().match(/^\[\w+\]: # \(/) ? 'comment' // [lang]: # (...
+        :   null;
+}
+
 function parseFrameArgs (line) {
     
+    let frameArgs = {};
+
+    let language = line.trim().startsWith('```')
+        ? line.match(/(?<=```).+?(?=\s)/g) // text between ``` and space
+        : line.match(/(?<=\[).+?(?=\])/g); // text between []
+
+    if(language)
+        frameArgs.language = language.toString();
+
     let match = line.trim().startsWith('```')
         ? line.match(/(?<=\{).+(?=\})/mg) // text between {}
         : line.match(/(?<=\().+(?=\))/mg); // text ()
 
-    let language = line.trim().startsWith('```')
-        ? line.match(/(?<=```).+(?=\s)/mg) // text between ``` and space
-        : line.match(/(?<=\[).+(?=\])/mg); // text between []
-
-    if (match == null) 
-        return null;
-    return match[0]
+    if (match) 
+        match
+        .toString()
         .split(',')
         .map(s => s.split('='))
         .reduce((obj,sp) => {
             obj[sp[0].trim()] = sp[1].trim();
             return obj;
-        }, {language});
+        }, frameArgs);
+
+    return frameArgs;
+
 }
 
 async function captureOutput(script) {
@@ -173,22 +227,3 @@ async function captureOutput(script) {
     return output;
 
 }
-
-/*
-async function captureOutput(script) {
-    
-    let output = '';
-    script = script.replace(/\r\n/gm, ';');    
-
-    await exec(`node -e "${script}"`)
-        .then(log => {
-            output += log.stdout.trim() + log.stderr.trim();
-        })
-        .catch(error => {
-            console.log('exec error: ' + error);
-        });
-
-    return output;
-
-}
-*/
