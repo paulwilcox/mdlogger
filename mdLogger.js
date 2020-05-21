@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 let fs = require('fs');
 let util = require('util');
 let cp = require('child_process');
@@ -6,6 +8,7 @@ let = exec = util.promisify(cp.exec);
 let args = process.argv.slice(2);
 let source = args[0];
 let target = args[1];
+let commentFrames = args[2] == '-c';
 
 (async function main() {
 
@@ -88,12 +91,9 @@ function groupFileLines (file) {
         value: null
     };
 
-    for(let line of lines) {
+    for(let line of lines) 
 
-        let isFrameStart = line.trim().startsWith('```')
-        let isFrameEnd = line.trim().endsWith('```')
-
-        if (group.type == 'md' && isFrameStart) {
+        if (group.type == 'md' && isFrameStart(line)) {
             groups.push(group);
             group = {
                 type: 'code',
@@ -101,8 +101,9 @@ function groupFileLines (file) {
                 frameArgs: parseFrameArgs(line),
                 value: null 
             }
+
         }
-        else if (group.type == 'code' && isFrameEnd) 
+        else if (group.type == 'code' && isFrameEnd(line))  
             group.frameEnder = line;
         else if (group.type == 'code' && group.frameEnder) {
             groups.push(group);
@@ -118,16 +119,32 @@ function groupFileLines (file) {
             group.value += line;
         }
 
-    }
-
     groups.push(group);
 
     return groups;
     
 }
 
-function parseFrameArgs (str) {
-    let match = str.match(/(?<=\{).+(?=\})/mg);
+function isFrameStart (line) { 
+    return  line.trim().startsWith('```') || // ```lang {yadah}
+            line.trim().match(/^\[\w+\]: # \(.+\)/); // [lang]: # (yadah)
+}
+
+function isFrameEnd (line) { 
+    return  line.trim() == '```' || // ```
+            line.trim().match(/^\[\w+\]: # \(\)/); // [lang]: # ()
+}
+
+function parseFrameArgs (line) {
+    
+    let match = line.trim().startsWith('```')
+        ? line.match(/(?<=\{).+(?=\})/mg) // text between {}
+        : line.match(/(?<=\().+(?=\))/mg); // text ()
+
+    let language = line.trim().startsWith('```')
+        ? line.match(/(?<=```).+(?=\s)/mg) // text between ``` and space
+        : line.match(/(?<=\[).+(?=\])/mg); // text between []
+
     if (match == null) 
         return null;
     return match[0]
@@ -136,9 +153,28 @@ function parseFrameArgs (str) {
         .reduce((obj,sp) => {
             obj[sp[0].trim()] = sp[1].trim();
             return obj;
-        }, {});
+        }, {language});
 }
 
+async function captureOutput(script) {
+    
+    let output = '';
+
+    fs.writeFileSync('./mdlogger.tempscript.js', script);
+
+    await exec('node ./mdlogger.tempscript.js')
+        .then(log => {
+            output += log.stdout.trim() + log.stderr.trim();
+        })
+        .catch(error => {
+            console.log('exec error: ' + error);
+        });
+
+    return output;
+
+}
+
+/*
 async function captureOutput(script) {
     
     let output = '';
@@ -155,4 +191,4 @@ async function captureOutput(script) {
     return output;
 
 }
-
+*/

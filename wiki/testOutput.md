@@ -14,7 +14,7 @@ Here is some sample javascript code:
 
 If you were to run it, it would result in:
 
-    ```{output=true}
+    ```javascript {output=true}    
     [ 1, 4, 9, 16 ]
     Was that cool or what?
     ```
