@@ -1,4 +1,3 @@
-
 To run the javascript chunks below and fill in the output chunks,
 run this code in the console:
 

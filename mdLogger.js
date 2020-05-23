@@ -84,8 +84,10 @@ function applyCommentSwitch (input) {
     let lines = input.split('\r\n');
     let output = '';
     
-    for (let line of lines) {
+    for (let i = 0; i < lines.length; i++) {
 
+        let line = lines[i];
+        let nl = i == 0 ? '' : '\r\n';
         let ft = frameType(line);
         let leaveAsIs = 
             ft == null ||
@@ -93,15 +95,15 @@ function applyCommentSwitch (input) {
             (!commentFrames && ft == 'code');
 
         if (leaveAsIs) { 
-            output += `\r\n${line}`;
+            output += `${nl}${line}`;
             continue;
         }
 
         let fa = parseFrameArgs(line);
 
         output += commentFrames 
-            ? `\r\n[${fa.language || '--'}]: # (`
-            : `\r\n    ````${fa.language || ''} {`;
+            ? `${nl}[${fa.language || '--'}]: # (`
+            : `${nl}    ````${fa.language || ''} {`;
 
         let comma = false;
         for(let key of Object.keys(fa)) {
