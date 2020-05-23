@@ -22,7 +22,7 @@ If you were to run it, it would result in:
 
 But let's pull from another file:
 
-[javascript]: # (setup=./wiki/testPre.md:motherlog=true)
+[javascript]: # (setup=./wiki/testPre.md:mother,log=true)
     console.log(mother.map(x => -x));
 [--]: # ()
 

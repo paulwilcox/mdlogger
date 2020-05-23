@@ -50,9 +50,11 @@ function applyCommentSwitch (input) {
             ? `\r\n[${fa.language || '--'}]: # (`
             : `\r\n    ````${fa.language || ''} {`;
 
+        let comma = false;
         for(let key of Object.keys(fa)) {
             if (key == 'language')
                 continue;
+            comma ? output += ',' : comma = true;
             output += `${key}=${fa[key]}`;
         }
 
