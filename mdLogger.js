@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/*
+
+  This code assumes that a naked '```' always ends a code frame.
+  A starter should always have text coming after it.   
+
+*/
+
 let fs = require('fs');
 let util = require('util');
 let cp = require('child_process');
@@ -16,6 +23,7 @@ let commentFrames = args[2] == '-c';
     groups = await processCodeGroups(groups);
     let output = rebuildGroups(groups);
     output = applyCommentSwitch(output);
+    output = applyProperBuffers(output);
 
     if (target == undefined) {
         console.log({output});
@@ -25,6 +33,51 @@ let commentFrames = args[2] == '-c';
     fs.writeFileSync(target, output);
 
 }())
+
+function applyProperBuffers (input) {
+
+    let lines = input.split('\r\n');
+
+    for(let i = 1; i < lines.length - 1; i++) {
+
+        let ft = frameType(lines[i]);
+
+        // if it's a normal or deleted line, move on
+        if (lines[i] === undefined || !ft) 
+            continue;
+
+        let direction = isFrameStart(lines[i]) ? 1 : -1;
+
+        // If it's 'code' type, remove blank lines before or after code
+        if(ft == 'code') {
+            let j = i + direction;
+            while (
+                j > 0 && 
+                j < lines.length && 
+                (lines[j] === undefined || lines[j].trim() === '')
+            ) {
+                lines[j] = undefined; 
+                j += direction;
+            }
+        }
+
+        // if it's a 'comment' type, ensure at least 
+        // one blank line before or after code
+        if(ft == 'comment') {
+            if (lines[i + direction].trim() !== '')
+                if (direction == 1)
+                    lines[i] += '\r\n';
+                if (direction == -1)
+                    lines[i] = '\r\n' + lines[i];
+        }
+       
+    }
+
+    return lines
+        .filter(line => line !== undefined)
+        .join('\r\n');
+
+}
 
 function applyCommentSwitch (input) {
 
@@ -167,19 +220,22 @@ function groupFileLines (file) {
 }
 
 function isFrameStart (line) { 
+    if(line.trim() == '```')
+        return false;
     return  line.trim().startsWith('```') || // ```lang {...}
-            line.trim().match(/^\[\w+\]: # \(.+\)/); // [lang]: # (...)
+            line.trim().match(/^\[.+\]: # \(.+\)/); // [lang]: # (...)
 }
 
 function isFrameEnd (line) { 
     return  line.trim() == '```' || // ```
-            line.trim().match(/^\[\w+\]: # \(\)/); // [lang]: # ()
+            line.trim().match(/^\[.+\]: # \(\)/); // [lang]: # ()
 }
 
 function frameType (line) {
-    return line.trim().startsWith('```') ? 'code'
+    return line === undefined ? null
+        :   line.trim().startsWith('```') ? 'code'
         :   line.trim().endsWith('```') ? 'code'
-        :   line.trim().match(/^\[\w+\]: # \(/) ? 'comment' // [lang]: # (...
+        :   line.trim().match(/^\[.+\]: # \(/) ? 'comment' // [lang]: # (...
         :   null;
 }
 
