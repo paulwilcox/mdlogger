@@ -12,9 +12,11 @@ mdlogger is a CLI, so install it globally.
 
 Mdlogger expects codeblocks to begin and end with triple backtics.  Language (only javascript for now) and options are declared with the following syntax:
 
-    ```language { option1=value, option2=value }
+[language]: # (option1=value,option2=value)
+
     code
-    ```
+
+[--]: # ()
 
 Currently, mdlogger expects one or more of the following options:
 
@@ -47,30 +49,36 @@ Use of the switch, or going back and forth between using it and not using it, is
 
 The following creates a 'setup' script that isn't run itself, but can be utilized in later scripts.
 
-    ```javascript { id=prerequisites }
+[javascript]: # (id=prerequisites)
+
     let array = [0, 1, 2, 3, 4, 5];
-    ```
+
+[--]: # ()
 
 ### Logging Scripts
 
 The following code block takes advantage of the setup script, and it has the code that will actually log the results:
 
-    ```javascript { log=true, setup=prerequisites }
+[javascript]: # (log=true,setup=prerequisites)
+
     let multiplier = 5;
     
     for(let i in array)
         array[i] *= multiplier;
 
     console.log(array);
-    ```
+
+[--]: # ()
 
 ### Output Blocks
 
 The following code block was written as an empty block.  However, it was populated at the execution of the mdlogger code shown later on.
 
-    ```javascript { output=true }
+[javascript]: # (output=true)
+
     [ 0, 5, 10, 15, 20, 25 ]
-    ```
+
+[--]: # ()
 
 ### Execution
 
@@ -87,11 +95,13 @@ Adding the `-c` switch:
 would have converted the blocks to look like:
 
     [javascript]: # (log=true)
+
         [ 0, 5, 10, 15, 20, 25 ]
+
     [--]: # ()
 
 except that the frames would be unindented, meaning that they would be invisible in the final presentation, so only the inner contents are seen.
 
     [ 0, 5, 10, 15, 20, 25 ]
 
-See readme.commentFrames.md to see this readme file as processed with the `-c` switch.
+See readme.commentChunks.md to see this readme file as processed with the `-c` switch.
