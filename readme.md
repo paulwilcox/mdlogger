@@ -1,4 +1,3 @@
-
 A command-line-interface that prints content to a codeblock in a markdown file using other code in that file -- just like notebooks in R.  Presently processes only javascript. 
 
 Learned that VSCode has notebooks on it's roadmap.  Depending on what that means exactly, this libary may become obsolete.  I hope it does.  But in the meantime, I'm tired of having to always be cutting and pasting when documenting something in markdown, particularly in the early stages of an evolving package.
