@@ -100,10 +100,13 @@ function applyCommentSwitch (input) {
         }
 
         let fa = parseFrameArgs(line);
+        if (fa.language == '--') 
+            fa.language = undefined;
 
-        output += commentFrames 
-            ? `${nl}[${fa.language || '--'}]: # (`
-            : `${nl}    ````${fa.language || ''} {`;
+        output += 
+              commentFrames ? `${nl}[${fa.language || '--'}]: # (`
+            : fa.language ? `${nl}    \`\`\`${fa.language} {`
+            : `${nl}    \`\`\``
 
         let comma = false;
         for(let key of Object.keys(fa)) {
@@ -113,7 +116,10 @@ function applyCommentSwitch (input) {
             output += `${key}=${fa[key]}`;
         }
 
-        output += commentFrames ? ')' : `}`;
+        output += 
+              commentFrames ? ')' 
+            : fa.language ? `}`
+            : '';
 
     }
 
@@ -136,7 +142,7 @@ async function processCodeGroups (groups) {
 
     let output = '';
 
-    for(var group of groups) 
+    for(let group of groups) 
         if (group.type == 'code' && group.frameArgs.log == 'true') {
 
             let setup = '';
@@ -157,7 +163,9 @@ async function processCodeGroups (groups) {
 
         }
         else if (group.type == 'code' && group.frameArgs.output == 'true') {
-            let leadSpace = group.frameStarter.match(/\s*/);
+            let leadSpace = frameType(group.frameStarter) == 'code'
+                ? group.frameStarter.match(/\s*/)
+                : '    ';
             group.value = leadSpace + output.replace(/\n/g,'\n' + leadSpace); 
             output = '';
         }
