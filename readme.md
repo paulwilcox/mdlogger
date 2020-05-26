@@ -94,4 +94,4 @@ except that the frames would be unindented, meaning that they would be invisible
 
     [ 0, 5, 10, 15, 20, 25 ]
 
-See readme.commentFrames.md to see this readme file as processed with the `-c` switch.
+See [readme.commentFrames.md](readme.commentFrames.md) to see this readme file as processed with the `-c` switch.
