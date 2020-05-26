@@ -1,6 +1,6 @@
 {
   "name": "mdlogger",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Process code in your markdown similar to knittr from r",
   "main": "mdLogger.js",
   "bin": {
