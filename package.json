@@ -1,14 +1,14 @@
 {
   "name": "mdlogger",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A command-line-interface that prints content to a codeblock in a markdown file using other code in that file -- just like notebooks in R",
   "main": "mdLogger.js",
   "bin": {
     "mdLogger": "./mdLogger.js"
   },
   "repository": {
-      "type": "git",
-      "url": "https://github.com/paulwilcox/mdlogger.git"
+    "type": "git",
+    "url": "https://github.com/paulwilcox/mdlogger.git"
   },
   "keywords": [
     "markdown",
