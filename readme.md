@@ -51,7 +51,7 @@ The following creates a 'setup' script that isn't run itself, but can be utilize
     let array = [0, 1, 2, 3, 4, 5];
     ```
 
-### Logging Scrpts
+### Logging Scripts
 
 The following code block takes advantage of the setup script, and it has the code that will actually log the results:
 
