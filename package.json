@@ -6,8 +6,9 @@
   "bin": {
     "mdLogger": "./mdLogger.js"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/paulwilcox/mdlogger.git"
   },
   "keywords": [
     "markdown",
