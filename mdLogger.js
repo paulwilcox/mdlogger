@@ -10,6 +10,7 @@
 let fs = require('fs');
 let util = require('util');
 let cp = require('child_process');
+const { freemem } = require('os');
 let = exec = util.promisify(cp.exec);
 
 let args = process.argv.slice(2);
@@ -138,36 +139,45 @@ function rebuildGroups(groups) {
     return output;
 }
 
+// Traverse the groups.  Concatenate all setups and values 
+// if it's a loging group.  Concatenate another setup for any 
+// output group.  And then set any output group's value to 
+// the results of the executed concatenated setup and codes. 
 async function processCodeGroups (groups) {
 
-    let output = '';
+    let processSetups = (setups) => {
+        let concat = '';
+        if (!setups)
+            return '';
+        if (!Array.isArray(setups))
+            setups = [setups];
+        for (let setup of setups) {
+            let _setup = !setup.includes(':') 
+                ? `${source}:${setup}`
+                : setup;
+            let [file,id] = _setup.split(':');
+            concat += getGroupById(file, id).value + '\r\n'; 
+        }
+        return concat;
+    }
+
+    let setup = '';
+    let code = '';
 
     for(let group of groups) 
         if (group.type == 'code' && group.frameArgs.log == 'true') {
-
-            let setup = '';
-
-            if (output != '')
-                output += '\r\n';
-
-            if (group.frameArgs.setup) {
-                if(!group.frameArgs.setup.includes(':'))
-                    group.frameArgs.setup = 
-                        source + ':' + 
-                        group.frameArgs.setup;
-                let [f,id] = group.frameArgs.setup.split(':');
-                setup += getGroupById(f, id).value;
-            }
-
-            output += await captureOutput(setup + ';' + group.value);
-
+            setup += processSetups(group.frameArgs.setup);
+            code += group.value + '\r\n';
         }
         else if (group.type == 'code' && group.frameArgs.output == 'true') {
+            setup += processSetups(group.frameArgs.setup);
+            let output = await captureOutput(setup + code);
             let leadSpace = frameType(group.frameStarter) == 'code'
                 ? group.frameStarter.match(/\s*/)
                 : '    ';
             group.value = leadSpace + output.replace(/\n/g,'\n' + leadSpace); 
-            output = '';
+            setup = '';
+            code = '';
         }
 
     return groups;
@@ -244,7 +254,7 @@ function isFrameEnd (line) {
 function frameType (line) {
     return line === undefined ? null
         :   line.trim().startsWith('```') ? 'code'
-        :   line.trim().endsWith('```') ? 'code'
+        //:   line.trim().endsWith('```') ? 'code'
         :   line.trim().match(/^\[.+\]: # \(/) ? 'comment' // [lang]: # (...
         :   null;
 }
@@ -253,6 +263,9 @@ function parseFrameArgs (line) {
     
     let frameArgs = {};
 
+    if (line.trim() == '```' || line.trim() == '[--]: # ()')
+        return frameArgs;
+
     let language = line.trim().startsWith('```')
         ? line.match(/(?<=```).+?(?=\s)/g) // text between ``` and space
         : line.match(/(?<=\[).+?(?=\])/g); // text between []
@@ -260,19 +273,26 @@ function parseFrameArgs (line) {
     if(language)
         frameArgs.language = language.toString();
 
-    let match = line.trim().startsWith('```')
+    let optionsMatch = line.trim().startsWith('```')
         ? line.match(/(?<=\{).+(?=\})/mg) // text between {}
         : line.match(/(?<=\().+(?=\))/mg); // text ()
 
-    if (match) 
-        match
-        .toString()
+    let optionValuePairs = 
+        optionsMatch.toString()
+        .replace(/(?<=\[.*),(?=.*])/g, '####')
         .split(',')
-        .map(s => s.split('='))
-        .reduce((obj,sp) => {
-            obj[sp[0].trim()] = sp[1].trim();
-            return obj;
-        }, frameArgs);
+        .map(equality => {
+            let [option, value] = equality.split('=');
+            option = option.trim();
+            value = value.trim();
+            if (value.includes('####'))
+                value = value.replace(/\[|]/g, '').split('####').map(val => val.trim());
+            return { option, value }
+        });
+
+    for(let optionValuePair of optionValuePairs) {
+        frameArgs[optionValuePair.option] = optionValuePair.value;        
+    }
 
     return frameArgs;
 

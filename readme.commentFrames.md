@@ -1,107 +1,231 @@
-A command-line-interface that prints content to a codeblock in a markdown file using other code in that file -- just like notebooks in R.  Presently processes only javascript. 
-
-Learned that VSCode has notebooks on it's roadmap.  Depending on what that means exactly, this libary may become obsolete.  I hope it does.  But in the meantime, I'm tired of having to always be cutting and pasting when documenting something in markdown, particularly in the early stages of an evolving package.
+A command-line-interface that prints content to a codeblock (or 'chunk') in a markdown file using other code in that file -- just like notebooks in R.  Presently processes only javascript. 
  
-## Getting Started
+## Installation
 
 mdlogger is a CLI, so install it globally.
 
     npm install mdlogger -g
 
-## Syntax and Options
+## Syntax
 
-Mdlogger expects codeblocks to begin and end with triple backtics.  Language (only javascript for now) and options are declared with the following syntax:
+Mdlogger expects codeblocks (or 'chunks') to begin and end with triple backtics.  
+Language (only javascript for now) and options are declared with the following 
+syntax (presented as a quoteblock to prevent processing):
 
-[language]: # (option1=value,option2=value)
-
-    code
-
-[--]: # ()
+> ```language { option1=value, option2=value }
+> code (or leave empty if it's an output block)
+> ```
 
 Currently, mdlogger expects one or more of the following options:
 
-* **id:** An identifier for the block.  Allows it to be referenced as a setup 
-  script by other code blocks.
-* **setup:** A reference to another code block, to be processed first before the
-  present code block.  The reference can be in another file, in which case separate 
-  the path and identifier with a colon (e.g.: setup=./test/setup.md:identifier).
-* **log:** A boolean indicating whether the codeblock is intended to be tracked 
-  for logging purposes.  Most likely, it will have a `console.log` usage in it.
-* **output:** A boolean indicating whether the block is intended as the target for
-  logged output of a previous block.  It starts out as empty and then gets 
-  populated on the run of mdlogger.
+* **log:** Boolean.  If true, appends the chunk to a cache to be processed later on. 
+* **output:** Boolean.  If true, executes the cache from previous 'log' chunks.
+* **id:** String, optional.  An identifier for the chunk.
+* **setup:** String or array, optional.  A reference to another chunk id.
 
-When code is set up, execute mdlogger in the console as follows:
+When code chunks are is set up, execute mdlogger in the console as follows:
 
-    mdlogger 'sourceFile', 'targetFile'
+    mdlogger 'sourceFile.md', 'targetFile.md'
 
 mdlogger will read the source file and outupt the results in the target file.  Both can be the same, in which case the output blocks of the source file are (re)populated.
 
-Mdlogger also has an optional `-c` switch that will convert all triple backtics to invisible comment structures to output to engines that do not work well with language blocks, such as GitHub.
+If you wish to work with an engine that doesn't treat the '```' as you like, such as github,
+you can add the optional '-c' switch to frame code with comment blocks that will not be seen
+in the final presentation.  See below for more details.
 
-    mdlogger 'sourceFile', 'targetFile' -c
+## Examples
 
-Use of the switch, or going back and forth between using it and not using it, is still in the early stages of development, so there may be issues, particularly with respect to whitespace surrounding the frames.
+### Registering code and executing it with 'log' and 'output'
 
-## Example
+Here is some code that, due to `log=true`, is registered for 
+future output capture.
 
-### Setup Scripts (Optional)
+[javascript]: # (log=true)
 
-The following creates a 'setup' script that isn't run itself, but can be utilized in later scripts.
+    let array = [1,2,3,4];
 
-[javascript]: # (id=prerequisites)
-
-    let array = [0, 1, 2, 3, 4, 5];
-
-[--]: # ()
-
-### Logging Scripts
-
-The following code block takes advantage of the setup script, and it has the code that will actually log the results:
-
-[javascript]: # (log=true,setup=prerequisites)
-
-    let multiplier = 5;
-    
-    for(let i in array)
-        array[i] *= multiplier;
-
-    console.log(array);
+    console.log(array.map(x => x*x));
+    console.log('Was that cool or what?');
 
 [--]: # ()
 
-### Output Blocks
+And here is some further code that is registered.
 
-The following code block was written as an empty block.  However, it was populated at the execution of the mdlogger code shown later on.
+[javascript]: # (log=true)
+
+    console.log('I think it was.');
+
+[--]: # ()
+
+And here, due to `output=true`, the code is processed when
+you run mdLogger, and the results are placed in this 
+code block, which was originally empty:
 
 [javascript]: # (output=true)
 
-    [ 0, 5, 10, 15, 20, 25 ]
+    [ 1, 4, 9, 16 ]
+    Was that cool or what?
+    I think it was.
 
 [--]: # ()
 
-### Execution
+Now, the log has been cleared.  It starts again.
 
-At the command line, the following code was run to populate the output block:
+[javascript]: # (log=true)
 
-    mdlogger 'readme.md' 'readme.md'
+    let people = {
+        'Tamara': { age: 60, gender: 'F' },
+        'Timothy': { age: 62, gender: 'M' }
+    }    
+    console.table(people);
 
-## Comment Frames
+[--]: # ()
+
+And in this output you'll notice that only the code 
+registered after the last output is processed:
+
+[javascript]: # (output=true)
+
+    ┌─────────┬─────┬────────┐
+    │ (index) │ age │ gender │
+    ├─────────┼─────┼────────┤
+    │ Tamara  │ 60  │  'F'   │
+    │ Timothy │ 62  │  'M'   │
+    └─────────┴─────┴────────┘
+
+[--]: # ()
+
+### Referencing another code chunk with 'id' and 'setup'
+
+There may be some code that you need to reference in multiple
+blocks, even if an output block intervenes before that setup
+code.
+
+No problem!  Just give a code block an 'id' and reference 
+that id in another block using 'setup'.
+
+Here's some setup code to be referenced later:
+
+[javascript]: # (id=A)
+
+    function A (text) {
+        console.log(`A says '${text}'.`);
+    }
+
+[--]: # ()
+
+[javascript]: # (id=B)
+
+    function B (text) {
+        console.log(`B says '${text}'.`);
+    }
+
+[--]: # ()
+
+Here's some code that clears the log cache:
+
+[javascript]: # (log=true)
+
+    console.log('Hey there!');
+
+[--]: # ()
+
+[javascript]: # (output=true)
+
+    Hey there!
+
+[--]: # ()
+
+Here's some code that seeks to reference the function
+in code-block 'A'.  Usually it would be unavailable at
+this point, but because of the 'setup' property, it 
+comes into scope.  
+
+[javascript]: # (log=true,setup=A)
+
+    A('Alan aids an aligator');
+
+[--]: # ()
+
+You do not repeat the same setup in future chunks, unless 
+for some reason you want that code duplicated.
+
+[javascript]: # (log=true)
+
+    A('and an allosaurus awes again');
+
+[--]: # ()
+
+[javascript]: # (output=true)
+
+    A says 'Alan aids an aligator'.
+    A says 'and an allosaurus awes again'.
+
+[--]: # ()
+
+All setups come before any code, even if they're referenced
+later.  You can even make your references in the output 
+chunk, and you can reference multiple files using array
+notation:
+
+[javascript]: # (log=true)
+
+    A('always angry at ampitheatres');
+    B('but baloons by beaches bounce beautifully');
+
+[--]: # ()
+
+[javascript]: # (output=true,setup=A,B)
+
+    A says 'always angry at ampitheatres'.
+    B says 'but baloons by beaches bounce beautifully'.
+
+[--]: # ()
+
+### Referencing a code chunk in another file
+
+If you desire to reference a code chunk outside the existing 
+file, you can do so.  Below, the `mother` array is in
+setup.md.
+
+[javascript]: # (log=true,setup=setup.md:mother)
+
+    console.log(mother.map(x => -x));
+
+[--]: # ()
+
+That results in:
+
+[javascript]: # (output=true)
+
+    [
+      -0, -1, -2, -3, -4,
+      -5, -6, -7, -8, -9
+    ]
+
+[--]: # ()
+
+## The '-c' switch 
+
+Mdlogger also has an optional `-c` switch that will convert all triple backtics to invisible comment structures to output to engines that do not work well with language blocks, such as GitHub.
 
 Adding the `-c` switch:
 
-    mdlogger 'readme.md', 'readme.md' -c
+    mdlogger 'sourceFile.md', 'targetFile.md' -c
 
 would have converted the blocks to look like:
 
-    [javascript]: # (log=true)
+> [javascript]: # (log=true)
+>     let arr = [ 0, 5, 10, 15, 20, 25 ]
+> [--]: # ()
 
-        [ 0, 5, 10, 15, 20, 25 ]
+Such comment blocks become invisible in the final presentation, so only the inner contents are seen:
 
-    [--]: # ()
+    let arr = [ 0, 5, 10, 15, 20, 25 ]
 
-except that the frames would be unindented, meaning that they would be invisible in the final presentation, so only the inner contents are seen.
+See [readme.commentFrames.md](readme.commentFrames.md) to see this readme file as processed with the `-c` switch.
 
-    [ 0, 5, 10, 15, 20, 25 ]
 
-See readme.commentChunks.md to see this readme file as processed with the `-c` switch.
+
+
+
