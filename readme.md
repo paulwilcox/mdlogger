@@ -10,7 +10,7 @@ mdlogger is a CLI, so install it globally.
 
 Mdlogger expects codeblocks (or 'chunks') to begin and end with triple backtics.  
 Language (only javascript for now) and options are declared with the following 
-syntax (presented as a quoteblock to prevent processing):
+syntax:
 
     ```language { option1=value, option2=value }
     code (or leave empty if it's an output block)
@@ -183,15 +183,16 @@ Adding the `-c` switch:
 
 would have converted the blocks to look like:
 
-> [javascript]: # (log=true)
->     let arr = [ 0, 5, 10, 15, 20, 25 ]
-> [--]: # ()
+    ` [javascript]: # (log=true)
+    `    let arr = [ 0, 5, 10, 15, 20, 25 ]
+    ` [--]: # ()
 
 Such comment blocks become invisible in the final presentation, so only the inner contents are seen:
 
     let arr = [ 0, 5, 10, 15, 20, 25 ]
 
 See [readme.commentFrames.md](readme.commentFrames.md) to see this readme file as processed with the `-c` switch.
+
 
 
 
