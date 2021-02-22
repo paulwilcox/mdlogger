@@ -12,9 +12,9 @@ Mdlogger expects codeblocks (or 'chunks') to begin and end with triple backtics.
 Language (only javascript for now) and options are declared with the following 
 syntax (presented as a quoteblock to prevent processing):
 
-> ```language { option1=value, option2=value }
-> code (or leave empty if it's an output block)
-> ```
+    ```language { option1=value, option2=value }
+    code (or leave empty if it's an output block)
+    ```
 
 Currently, mdlogger expects one or more of the following options:
 
