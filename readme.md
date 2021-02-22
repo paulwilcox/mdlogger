@@ -1,5 +1,9 @@
 A command-line-interface that prints content to a codeblock (or 'chunk') in a markdown file using other code in that file -- just like notebooks in R.  Presently processes only javascript. 
- 
+
+If you have been using mdLogger, here are the recent changes
+    - You can now do more than one 'setup'
+    - The 'setup' option can be in an 'output' block, if you want.
+
 ## Installation
 
 mdlogger is a CLI, so install it globally.
