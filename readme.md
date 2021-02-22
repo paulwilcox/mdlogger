@@ -187,7 +187,7 @@ would have converted the blocks to look like:
     `    let arr = [ 0, 5, 10, 15, 20, 25 ]
     ` [--]: # ()
 
-Such comment blocks become invisible in the final presentation, so only the inner contents are seen:
+except without the indentation and leading backticks. Such comment blocks become invisible in the final presentation, so only the inner contents are seen:
 
     let arr = [ 0, 5, 10, 15, 20, 25 ]
 
